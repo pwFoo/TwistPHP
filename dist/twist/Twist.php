@@ -617,6 +617,17 @@
 		}
 
 		/**
+		 * Return an instance of the GDPR helper.
+		 * @return \Twist\Core\Helpers\GDPR
+		 */
+		public static function GDPR(){
+
+			$resTwistHelper = (!Instance::isObject('helperGDPR')) ? new Helpers\GDPR() : Instance::retrieveObject('helperGDPR');
+			Instance::storeObject('helperGDPR',$resTwistHelper);
+			return $resTwistHelper;
+		}
+
+		/**
 		 * Return an instance of the ICS helper.
 		 * @return \Twist\Core\Helpers\ICS
 		 */

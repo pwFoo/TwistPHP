@@ -173,13 +173,18 @@
 		}
 
 		/**
-		 * Set the main Database comment
-		 * @param string $strComment
+		 * Get/Set the main Database comment, passing null will only return the comment
+		 * @param null $strComment
+		 * @return mixed|null
 		 */
-		public function comment($strComment){
+		public function comment($strComment = null){
 
-			$this->mxdTableComment = $strComment;
-			$this->arrStructureChanges[] = array('alter' => 'comment','data' => array());
+			if(!is_null($strComment)){
+				$this->mxdTableComment = $strComment;
+				$this->arrStructureChanges[] = array('alter' => 'comment','data' => array());
+			}
+
+			return $this->mxdTableComment;
 		}
 
 		/**
@@ -317,6 +322,15 @@
 			}else{
 				throw new \Exception(sprintf("Column '%s' dose not exist in this table structure",$strColumnName));
 			}
+		}
+
+		/**
+		 * Get all columns within the table structure
+		 * @return array All columns as an array
+		 */
+		public function columns(){
+
+			return $this->arrStructure;
 		}
 
 		/**
