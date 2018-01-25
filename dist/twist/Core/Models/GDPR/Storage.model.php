@@ -31,20 +31,61 @@
 	 * and efficiently. There is also a page in the framework manager to provide further assistance.
 	 */
 	class Storage{
+		
+		protected $arrLocations = array();
 
-		public const USER_ID = 1;
-		public const USER_EMAIL = 2;
-		public const USER_PHONE = 3;
-		public const USER_ALL = 4;
-
-		protected static $arrLocations = array();
-
-		public static function isLocation($strTable){
-			return (array_key_exists($strTable,self::$arrLocations));
+		public function __construct(){
+			$this->load();
 		}
 
-		public static function isDataField($strTable,$srtFieldName){
-			return (self::isLocation($strTable) && array_key_exists($srtFieldName,self::$arrLocations[$strTable]['fields']));
+		/**
+		 * Load all the locations from the database and expand into usable data
+		 */
+		public function load(){
+
+			//Get all the locations from the database
+			$this->arrLocations = \Twist::framework()->tools()->arrayReindex(
+				\Twist::Database()->records(TWIST_DATABASE_PREFIX.'gdpr_locations')->all(),
+				'table'
+			);
+
+			//Expand all the fields back into the table array
+			foreach($this->arrLocations as $arrData){
+				$this->arrLocations[$arrData['table']]['fields'] = json_decode($arrData['fields'],true);
+			}
+		}
+
+		/**
+		 * Store all changes to the database
+		 * @return bool
+		 */
+		public function commit(){
+
+			//Remove all the current records
+			\Twist::Database()->records(TWIST_DATABASE_PREFIX.'gdpr_locations')->delete(null,null,null);
+
+			foreach($this->arrLocations as $strTable => $arrData){
+
+				$resLocation = \Twist::Database()->records(TWIST_DATABASE_PREFIX.'gdpr_locations')->create();
+				$resLocation->set('table',$strTable);
+				$resLocation->set('usage',$arrData['usage']);
+				$resLocation->set('portable',$arrData['portable']);
+				$resLocation->set('locked',$arrData['locked']);
+				$resLocation->set('autodetected',$arrData['autodetected']);
+				$resLocation->set('added',$arrData['added']);
+				$resLocation->set('fields',json_encode($arrData['fields']));
+				$resLocation->commit();
+			}
+
+			return true;
+		}
+
+		public function isLocation($strTable){
+			return (array_key_exists($strTable,$this->arrLocations));
+		}
+
+		public function isDataField($strTable,$srtFieldName){
+			return ($this->isLocation($strTable) && array_key_exists($srtFieldName,$this->arrLocations[$strTable]['fields']));
 		}
 
 		/**
@@ -53,10 +94,11 @@
 		 * @param $strUsageDescription
 		 * @param $mxdPortable true Set to True will export all fields, False will export none and pass an array of fields to limit the export
 		 */
-		public static function addLocation($strTable,$strUsageDescription,$mxdPortable = true){
+		public function addLocation($strTable,$strUsageDescription,$mxdPortable = true){
 
-			if(!array_key_exists($strTable,self::$arrLocations)){
-				self::$arrLocations[$strTable] = array(
+			if(!array_key_exists($strTable,$this->arrLocations)){
+
+				$this->arrLocations[$strTable] = array(
 					'fields' => array(),
 					'usage' => $strUsageDescription,
 					'portable' => $mxdPortable,
@@ -74,11 +116,11 @@
 		 * @param $intType
 		 * @throws \Exception
 		 */
-		public static function addDataField($strTable,$srtFieldName,$intType){
+		public function addDataField($strTable,$srtFieldName,$intType){
 
-			if(array_key_exists($strTable,self::$arrLocations)){
+			if(array_key_exists($strTable,$this->arrLocations)){
 
-				self::$arrLocations[$strTable]['fields'][$srtFieldName] = array(
+				$this->arrLocations[$strTable]['fields'][$srtFieldName] = array(
 					'field' => $srtFieldName,
 					'type' => $intType,
 					'locked' => 0,
@@ -91,19 +133,19 @@
 			}
 		}
 
-		public static function removeLocation($strTable){
+		public function removeLocation($strTable){
 
-			if(self::isLocation($strTable) && !self::$arrLocations[$strTable]['locked']){
-				unset(self::$arrLocations[$strTable]);
+			if($this->isLocation($strTable) && !$this->arrLocations[$strTable]['locked']){
+				unset($this->arrLocations[$strTable]);
 			}else{
 				throw new \Exception("This location has not been added or is locked by TwistPHP");
 			}
 		}
 
-		public static function removeDataField($strTable,$srtFieldName){
+		public function removeDataField($strTable,$srtFieldName){
 
-			if(self::isDataField($strTable,$srtFieldName) && !self::$arrLocations[$strTable]['fields'][$srtFieldName]['locked']){
-				unset(self::$arrLocations[$strTable]['fields'][$srtFieldName]);
+			if($this->isDataField($strTable,$srtFieldName) && !$this->arrLocations[$strTable]['fields'][$srtFieldName]['locked']){
+				unset($this->arrLocations[$strTable]['fields'][$srtFieldName]);
 			}else{
 				throw new \Exception("This data field has not been added or is locked by TwistPHP");
 			}
@@ -116,19 +158,19 @@
 		public function autodetect(){
 
 			$arrNameDetection = array(
-				'user_id' => self::USER_ID,
-				'user' => self::USER_ID,
-				'email' => self::USER_EMAIL,
-				'email_address' => self::USER_EMAIL,
-				'email_addr' => self::USER_EMAIL,
-				'phone' => self::USER_PHONE,
-				'phone_number' => self::USER_PHONE,
-				'phonenumber' => self::USER_PHONE,
-				'phoneno' => self::USER_PHONE,
-				'phone_no' => self::USER_PHONE,
-				'telephone' => self::USER_PHONE,
-				'mobile' => self::USER_PHONE,
-				'landline' => self::USER_PHONE,
+				'user_id' => Data::TYPE_ID,
+				'user' => Data::TYPE_ID,
+				'email' => Data::TYPE_EMAIL,
+				'email_address' => Data::TYPE_EMAIL,
+				'email_addr' => Data::TYPE_EMAIL,
+				'phone' => Data::TYPE_PHONE,
+				'phone_number' => Data::TYPE_PHONE,
+				'phonenumber' => Data::TYPE_PHONE,
+				'phoneno' => Data::TYPE_PHONE,
+				'phone_no' => Data::TYPE_PHONE,
+				'telephone' => Data::TYPE_PHONE,
+				'mobile' => Data::TYPE_PHONE,
+				'landline' => Data::TYPE_PHONE,
 			);
 
 			$arrTables = \Twist::Database()->query("SHOW TABLES")->rows();
@@ -153,7 +195,7 @@
 
 						if(array_key_exists($strColumnName,$arrNameDetection)){
 							//Found match, Add the field as a location
-							self::autodetectAddMatch($strEachTable,$strColumnName,$resStructure->comment(),$arrNameDetection[$strColumnName]);
+							$this->autodetectAddMatch($strEachTable,$strColumnName,$resStructure->comment(),$arrNameDetection[$strColumnName]);
 							$blFoundFields = true;
 						}
 					}
@@ -189,7 +231,7 @@
 							foreach($arrPossibleEmail as $strField => $intCount){
 								if($intCount >= $intThreshold){
 									//Found match, Add the phone field as a location
-									self::autodetectAddMatch($strEachTable,$strField,$resStructure->comment(),self::USER_EMAIL);
+									$this->autodetectAddMatch($strEachTable,$strField,$resStructure->comment(),Data::TYPE_EMAIL);
 								}
 							}
 
@@ -197,7 +239,7 @@
 							foreach($arrPossiblePhone as $strField => $intCount){
 								if($intCount >= $intThreshold){
 									//Found match, Add the phone field as a location
-									self::autodetectAddMatch($strEachTable,$strField,$resStructure->comment(),self::USER_PHONE);
+									$this->autodetectAddMatch($strEachTable,$strField,$resStructure->comment(),Data::TYPE_PHONE);
 								}
 							}
 						}
@@ -216,18 +258,18 @@
 		 * @param $strUsageDescription
 		 * @param $intType
 		 */
-		protected static function autodetectAddMatch($strTable,$strField,$strUsageDescription,$intType){
+		protected function autodetectAddMatch($strTable,$strField,$strUsageDescription,$intType){
 
 			//add the location if not setup already
-			if(!self::isLocation($strTable)){
-				self::addLocation($strTable,$strUsageDescription);
-				self::$arrLocations[$strTable]['autodetected'] = '1';
+			if(!$this->isLocation($strTable)){
+				$this->addLocation($strTable,$strUsageDescription);
+				$this->arrLocations[$strTable]['autodetected'] = '1';
 			}
 
 			//Add the field to that location if not setup already
-			if(!self::isDataField($strTable,$strField)){
-				self::addDataField($strTable,$strField,$intType);
-				self::$arrLocations[$strTable]['fields'][$strField]['autodetected'] = '1';
+			if(!$this->isDataField($strTable,$strField)){
+				$this->addDataField($strTable,$strField,$intType);
+				$this->arrLocations[$strTable]['fields'][$strField]['autodetected'] = '1';
 			}
 		}
 	}
