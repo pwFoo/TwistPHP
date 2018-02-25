@@ -45,7 +45,7 @@
 
 			//Get all the locations from the database
 			$this->arrLocations = \Twist::framework()->tools()->arrayReindex(
-				\Twist::Database()->records(TWIST_DATABASE_PREFIX.'gdpr_locations')->all(),
+				\Twist::Database()->records(TWIST_DATABASE_TABLE_PREFIX.'gdpr_locations')->all(),
 				'table'
 			);
 
@@ -55,6 +55,10 @@
 			}
 		}
 
+		public function reset(){
+			$this->arrLocations = array();
+		}
+
 		/**
 		 * Store all changes to the database
 		 * @return bool
@@ -62,11 +66,11 @@
 		public function commit(){
 
 			//Remove all the current records
-			\Twist::Database()->records(TWIST_DATABASE_PREFIX.'gdpr_locations')->delete(null,null,null);
+			\Twist::Database()->records(TWIST_DATABASE_TABLE_PREFIX.'gdpr_locations')->delete(null,null,null);
 
 			foreach($this->arrLocations as $strTable => $arrData){
 
-				$resLocation = \Twist::Database()->records(TWIST_DATABASE_PREFIX.'gdpr_locations')->create();
+				$resLocation = \Twist::Database()->records(TWIST_DATABASE_TABLE_PREFIX.'gdpr_locations')->create();
 				$resLocation->set('table',$strTable);
 				$resLocation->set('usage',$arrData['usage']);
 				$resLocation->set('portable',$arrData['portable']);
@@ -78,6 +82,10 @@
 			}
 
 			return true;
+		}
+
+		public function locations(){
+			return $this->arrLocations;
 		}
 
 		public function isLocation($strTable){
@@ -171,19 +179,45 @@
 				'telephone' => Data::TYPE_PHONE,
 				'mobile' => Data::TYPE_PHONE,
 				'landline' => Data::TYPE_PHONE,
+				'post_code' => Data::TYPE_POSTCODE,
+				'postcode' => Data::TYPE_POSTCODE,
+				'postal_code' => Data::TYPE_POSTCODE,
+				'postalcode' => Data::TYPE_POSTCODE,
+				'firstname' => Data::TYPE_FIRSTNAME,
+				'first_name' => Data::TYPE_FIRSTNAME,
+				'forename' => Data::TYPE_FIRSTNAME,
+				'christian_name' => Data::TYPE_FIRSTNAME,
+				'surname' => Data::TYPE_SURNAME,
+				'familyname' => Data::TYPE_SURNAME,
+				'family_name' => Data::TYPE_SURNAME,
+				'fullname' => Data::TYPE_FULLNAME
 			);
 
-			$arrTables = \Twist::Database()->query("SHOW TABLES")->rows();
+			$arrTablesRaw = \Twist::Database()->query("SHOW TABLES")->rows();
 
-			if(count($arrTables) == 0){
-				$arrTables = \Twist::Database()->query("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_CATALOG='%s'",TWIST_DATABASE_NAME)->rows();
+			if(count($arrTablesRaw) == 0){
+				$arrTablesRaw = \Twist::Database()->query("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_CATALOG='%s'",TWIST_DATABASE_NAME)->rows();
 
-				if(count($arrTables) == 0){
-					$arrTables = \Twist::Database()->query("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA='%s'",TWIST_DATABASE_NAME)->rows();
+				if(count($arrTablesRaw) == 0){
+					$arrTablesRaw = \Twist::Database()->query("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA='%s'",TWIST_DATABASE_NAME)->rows();
+				}
+
+				$arrTables = array();
+				foreach($arrTablesRaw as $arrTable){
+					$arrTables[] = $arrTable['TABLE_NAME'];
+				}
+
+			}else{
+
+				$strTableKey = array_keys($arrTablesRaw[0])[0];
+				$arrTables = array();
+				foreach($arrTablesRaw as $arrTable){
+					$arrTables[] = $arrTable[$strTableKey];
 				}
 			}
 
 			if(count($arrTables) > 0){
+
 				//If tables have been found start the detection process
 				foreach($arrTables as $strEachTable){
 					$resStructure = \Twist::Database()->table($strEachTable)->get();
@@ -210,6 +244,7 @@
 
 							$arrPossibleEmail = array();
 							$arrPossiblePhone = array();
+							$arrPossiblePostcode = array();
 
 							foreach($arrDataSample as $arrEachSample){
 								foreach($arrEachSample as $strField => $strValue){
@@ -218,9 +253,12 @@
 									if(\Twist::Validate()->email($strValue)){
 										//Found an email address
 										$arrPossibleEmail[$strField]++;
-									}elseif(\Twist::Validate()->telephone($strValue)){
+									}elseif(\Twist::Validate()->telephone($strValue) && !preg_match("#^([0-9]{4})([\s\-\.]{1})([0-9]{2})([\s\-\.]{1})([0-9]{2})(\s([0-9]{2})\:([0-9]{2})\:([0-9]{2}))?$#",$strValue,$arrMatches)){
 										//Found a possible phone number
 										$arrPossiblePhone[$strField]++;
+									}elseif(\Twist::Validate()->postcode($strValue)){
+										//Found a possible phone number
+										$arrPossiblePostcode[$strField]++;
 									}
 								}
 							}
@@ -240,6 +278,14 @@
 								if($intCount >= $intThreshold){
 									//Found match, Add the phone field as a location
 									$this->autodetectAddMatch($strEachTable,$strField,$resStructure->comment(),Data::TYPE_PHONE);
+								}
+							}
+
+							//Check the results to see if any matches have been found
+							foreach($arrPossiblePostcode as $strField => $intCount){
+								if($intCount >= $intThreshold){
+									//Found match, Add the postcode field as a location
+									$this->autodetectAddMatch($strEachTable,$strField,$resStructure->comment(),Data::TYPE_POSTCODE);
 								}
 							}
 						}

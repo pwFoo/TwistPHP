@@ -173,18 +173,18 @@
 		}
 
 		/**
-		 * Get/Set the main Database comment, passing null will only return the comment
+		 * Set the main Database comment
 		 * @param null $strComment
 		 * @return mixed|null
 		 */
 		public function comment($strComment = null){
 
-			if(!is_null($strComment)){
+			if(is_null($strComment)){
+				return $this->mxdTableComment;
+			}else{
 				$this->mxdTableComment = $strComment;
 				$this->arrStructureChanges[] = array('alter' => 'comment','data' => array());
 			}
-
-			return $this->mxdTableComment;
 		}
 
 		/**
@@ -325,11 +325,10 @@
 		}
 
 		/**
-		 * Get all columns within the table structure
-		 * @return array All columns as an array
+		 * Get all the data/information about all the columns that make up the table structure
+		 * @return array Columns data as an array
 		 */
 		public function columns(){
-
 			return $this->arrStructure;
 		}
 
