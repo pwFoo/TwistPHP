@@ -33,3 +33,13 @@ CREATE TABLE IF NOT EXISTS /*TWIST_DATABASE_TABLE_PREFIX*/`gdpr_locations` (
   `fields` text COLLATE utf8_unicode_ci,
   UNIQUE KEY `table` (`table`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- @comment Store the GDPR user consent
+CREATE TABLE /*TWIST_DATABASE_TABLE_PREFIX*/`gdpr_consent` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `identifier` char(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `user_id` int(11) NOT NULL DEFAULT '0',
+  `type` int(11) NOT NULL,
+  `given` datetime NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci AUTO_INCREMENT=1;
