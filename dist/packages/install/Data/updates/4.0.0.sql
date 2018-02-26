@@ -32,14 +32,15 @@ CREATE TABLE IF NOT EXISTS /*TWIST_DATABASE_TABLE_PREFIX*/`gdpr_locations` (
   `added` int(11) NOT NULL,
   `fields` text COLLATE utf8_unicode_ci,
   UNIQUE KEY `table` (`table`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Store the GDPR data locations';
 
 -- @comment Store the GDPR user consent
 CREATE TABLE /*TWIST_DATABASE_TABLE_PREFIX*/`gdpr_consent` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `identifier` char(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `user_id` int(11) NOT NULL DEFAULT '0',
-  `type` int(11) NOT NULL,
+  `identifier_type` int(11) NOT NULL,
+  `consent` int(11) NOT NULL,
   `given` datetime NOT NULL,
+  `given_by` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci AUTO_INCREMENT=1;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci AUTO_INCREMENT=1 COMMENT='Store the consent given by the user for GDPR';
