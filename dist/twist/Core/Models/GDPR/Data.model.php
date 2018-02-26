@@ -39,11 +39,18 @@
 		public const TYPE_FULLNAME = 5;
 		public const TYPE_FIRSTNAME = 6;
 		public const TYPE_SURNAME = 7;
+		public const TYPE_DOB = 8;
+		public const TYPE_GENDER = 9;
+		public const TYPE_EMPLOYER = 10;
+		public const TYPE_ROLE = 11;
 
 		public const PROFILER_INVESTIGATE_POSTCODE = false;
 		public const PROFILER_INVESTIGATE_FIRSTNAME = false;
 		public const PROFILER_INVESTIGATE_SURNAME = false;
 		public const PROFILER_INVESTIGATE_FULLNAME = false;
+		public const PROFILER_INVESTIGATE_DOB = false;
+		public const PROFILER_INVESTIGATE_EMPLOYER = false;
+		public const PROFILER_INVESTIGATE_ROLE = false;
 		public const PROFILER_RUN_LIMIT = 15;
 
 		public const DEFAULT_PROFILE = array(
@@ -51,7 +58,11 @@
 			'personal' => array(
 				'fullname' => '',
 				'firstname' => '',
-				'surname' => ''
+				'surname' => '',
+				'dob' => '',
+				'gender' => '',
+				'employer' => '',
+				'role' => ''
 			),
 			'email' => array(),
 			'phone' => array(),
@@ -147,6 +158,10 @@
 			return $this->arrProfile;
 		}
 
+		public function profileData(){
+			return $this->arrProfiledData;
+		}
+
 		protected function runProfileQueue(){
 
 			$intCount = count($this->arrProfiledIdentifiers);
@@ -235,6 +250,18 @@
 						$this->arrProfile['postcode'][] = $mxdIdentifier;
 					}
 					break;
+
+				case self::TYPE_DOB:
+					$this->arrProfile['personal']['dob'] = $mxdIdentifier;
+					break;
+
+				case self::TYPE_EMPLOYER:
+					$this->arrProfile['personal']['employer'] = $mxdIdentifier;
+					break;
+
+				case self::TYPE_ROLE:
+					$this->arrProfile['personal']['role'] = $mxdIdentifier;
+					break;
 			}
 
 			//Add the indentifier to the profiled list with a false flag i.e. Still to be processed
@@ -244,7 +271,10 @@
 				if(($intType == self::TYPE_POSTCODE && !self::PROFILER_INVESTIGATE_POSTCODE) ||
 					($intType == self::TYPE_FIRSTNAME && !self::PROFILER_INVESTIGATE_FIRSTNAME) ||
 					($intType == self::TYPE_SURNAME && !self::PROFILER_INVESTIGATE_SURNAME) ||
-					($intType == self::TYPE_FULLNAME && !self::PROFILER_INVESTIGATE_FULLNAME)){
+					($intType == self::TYPE_FULLNAME && !self::PROFILER_INVESTIGATE_FULLNAME) ||
+					($intType == self::TYPE_DOB && !self::PROFILER_INVESTIGATE_DOB) ||
+					($intType == self::TYPE_EMPLOYER && !self::PROFILER_INVESTIGATE_EMPLOYER) ||
+					($intType == self::TYPE_ROLE && !self::PROFILER_INVESTIGATE_ROLE)){
 
 					//Don't investigate these items
 

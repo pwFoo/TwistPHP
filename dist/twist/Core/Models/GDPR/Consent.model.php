@@ -30,4 +30,37 @@
 	 */
 	class Consent{
 
+		public const CONSENT_GENERAL = 0;
+		public const CONSENT_NEWS = 1;
+		public const CONSENT_MARKETING = 2;
+		public const CONSENT_THIRDPARTY = 3;
+
+		/**
+		 * Give general consent for system communications with a user
+		 * @param $mxdIdentifier
+		 * @param $intUserID
+		 */
+		public function give($mxdIdentifier,$intUserID = 0){
+
+		}
+
+		/**
+		 * Double Optin for a particular type off communication
+		 * @param $mxdIdentifier
+		 * @param $intConsentType
+		 * @param $intUserID
+		 */
+		public function optin($mxdIdentifier,$intConsentType,$intUserID = 0){
+
+		}
+
+		/**
+		 * Find out if consent has been given
+		 * @param $intConsentType
+		 * @param $intType
+		 */
+		public function given($mxdIdentifier,$intConsentType){
+
+		}
+
 	}

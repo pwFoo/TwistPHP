@@ -30,4 +30,36 @@
 	 */
 	class Portable{
 
+		public const EXPORT_CVS = 0;
+		public const EXPORT_HTML = 1;
+		public const EXPORT_XML = 2;
+
+		public function export($mxdIdentifier,$intExportType = self::EXPORT_XML,$blSingleFile = true){
+
+			$resData = new Data();
+			$arrProfile = $resData->profile($mxdIdentifier);
+			$arrData = $resData->profileData();
+
+			foreach($arrData as $strTable => $arrDataRows){
+				$this->pack($strTable,$arrDataRows);
+			}
+
+			if($blSingleFile){
+
+			}else{
+
+			}
+		}
+
+		protected function pack(){
+
+		}
+
+		public function import(){
+
+		}
+
+		protected function unpack(){
+
+		}
 	}

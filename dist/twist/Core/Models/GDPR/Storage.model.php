@@ -190,7 +190,17 @@
 				'surname' => Data::TYPE_SURNAME,
 				'familyname' => Data::TYPE_SURNAME,
 				'family_name' => Data::TYPE_SURNAME,
-				'fullname' => Data::TYPE_FULLNAME
+				'fullname' => Data::TYPE_FULLNAME,
+				'dob' => Data::TYPE_DOB,
+				'date_of_birth' => Data::TYPE_DOB,
+				'dateofbirth' => Data::TYPE_DOB,
+				'birthday' => Data::TYPE_DOB,
+				'employer' => Data::TYPE_EMPLOYER,
+				'company' => Data::TYPE_EMPLOYER,
+				'role' => Data::TYPE_ROLE,
+				'job' => Data::TYPE_ROLE,
+				'job_title' => Data::TYPE_ROLE,
+				'jobtitle' => Data::TYPE_ROLE
 			);
 
 			$arrTablesRaw = \Twist::Database()->query("SHOW TABLES")->rows();
