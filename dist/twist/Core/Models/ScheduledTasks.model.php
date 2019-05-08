@@ -126,16 +126,16 @@
 
 			$arrPulse = $arrPulseTemp = \Twist::Cache('ScheduledTasks')->read('Pulse');
 
-			$intLastPulse = count($arrPulseTemp) ? array_pop($arrPulseTemp) : 0;
-			$intPrevious1Pulse = count($arrPulseTemp) ? array_pop($arrPulseTemp) : 0;
-			$intPrevious2Pulse = count($arrPulseTemp) ? array_pop($arrPulseTemp) : 0;
+			$intLastPulse = is_array($arrPulseTemp) && count($arrPulseTemp) ? array_pop($arrPulseTemp) : 0;
+			$intPrevious1Pulse = is_array($arrPulseTemp) && count($arrPulseTemp) ? array_pop($arrPulseTemp) : 0;
+			$intPrevious2Pulse = is_array($arrPulseTemp) && count($arrPulseTemp) ? array_pop($arrPulseTemp) : 0;
 
 			$intFreq1 = ($intLastPulse - $intPrevious1Pulse);
 			$intFreq2 = ($intPrevious1Pulse - $intPrevious2Pulse);
 
 			return array(
-				'active' => count($arrPulse) && ($intFreq1 == $intFreq2 || $intFreq1 == ($intFreq2-1) || $intFreq1 == ($intFreq2+1)),
-				'status' => (count($arrPulse)) ? (($intFreq1 == $intFreq2 || $intFreq1 == ($intFreq2-1) || $intFreq1 == ($intFreq2+1)) ? 'Active' : 'Detecting...') : 'Inactive',
+				'active' => is_array($arrPulse) && count($arrPulse) && ($intFreq1 == $intFreq2 || $intFreq1 == ($intFreq2-1) || $intFreq1 == ($intFreq2+1)),
+				'status' => (is_array($arrPulse) && count($arrPulse)) ? (($intFreq1 == $intFreq2 || $intFreq1 == ($intFreq2-1) || $intFreq1 == ($intFreq2+1)) ? 'Active' : 'Detecting...') : 'Inactive',
 				'last_pulse' => $intLastPulse,
 				'frequency' => $intFreq1,
 				'history' => $arrPulse
@@ -266,7 +266,14 @@
 
 			//Send the result via email if required
 			if($resTask->get('email') != '' && trim($arrResult['output']) != ''){
-				Notifications\Queue::sendToEmail($resTask->get('email'),'Twist Scheduled Task ['.$intTaskID.']: report',$arrResult['output']);
+
+				\Twist::Email()->send(
+					$resTask->get('email'),
+					'Twist Scheduled Task ['.$intTaskID.']: Report',
+					"Debug report for Twist Scheduled Task [{$intTaskID}]\n\n".$arrResult['output'],
+					'report@'.\Twist::framework()->setting('SITE_HOST'),
+					false
+				);
 			}
 		}
 

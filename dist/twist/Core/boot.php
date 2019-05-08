@@ -22,7 +22,7 @@
 	 * @link       https://twistphp.com
 	 */
 
-	if(!headers_sent()){
+	if(!headers_sent() && (empty(getenv('twist_cron_child')) && empty(getenv('twist_cron')))){
 		//IE8 Session Fix
 		header('P3P: CP="NOI ADM DEV PSAi COM NAV OUR OTRo STP IND DEM"');
 		header('X-Frame-Options: SAMEORIGIN');
@@ -46,6 +46,16 @@
 		if(!defined($strKey)){
 			define($strKey,$mxdValue);
 		}
+	}
+
+	//Fix DOCUMENT_ROOT when running as Cron on some servers
+	if(!array_key_exists('DOCUMENT_ROOT',$_SERVER)){
+		$_SERVER['DOCUMENT_ROOT'] = TWIST_PUBLIC_ROOT;
+	}
+
+	//Fix SCRIPT_FILENAME when running as Cron on some servers
+	if(!array_key_exists('SCRIPT_FILENAME',$_SERVER)){
+		$_SERVER['SCRIPT_FILENAME'] = __FILE__;
 	}
 
 	//If the SITE_URI_REWRITE is not already defined then it will be defined here
