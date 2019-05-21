@@ -361,7 +361,7 @@
 			}
 
 			//Start processing the traversal
-			$urlCurrentURI = trim( $urlCurrentURI, '/' );
+			$urlCurrentURI = ltrim( $urlCurrentURI, '/' );
 			$urlOut = rtrim( $urlRelativePath, '/' );
 
 			if( substr( $urlRelativePath, 0, 2 ) === './' ) {
