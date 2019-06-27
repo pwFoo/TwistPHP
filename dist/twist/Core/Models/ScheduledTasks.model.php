@@ -155,7 +155,7 @@
 			$arrRun = array();
 			$arrRun[] = 1;
 
-			$intMinute = (int) date('m');
+			$intMinute = (int) date('i');
 			$intHour = (int) date('H');
 
 			if($intMinute == 0 || !($intMinute&1)){
@@ -206,8 +206,9 @@
 				$arrRun[] = 1440;
 			}
 
-			//Add the current time for those that run at a specific time
+			//Add the current time for those that run at a specific time, remove leading 0 to support both variations of time format
 			$arrRun[] = date('H:i');
+			$arrRun[] = ltrim(date('H:i'),'0');
 
 			$arrOut = \Twist::Database()->records(TWIST_DATABASE_TABLE_PREFIX.'scheduled_tasks')->find($arrRun,'frequency');
 
