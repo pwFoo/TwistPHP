@@ -607,7 +607,7 @@ class View extends Base{
 	            }
 
 	            //Step 4 - Grab the result parameters
-	            preg_match_all("#(\'([^\']*)\'|\"([^\"]*)\"|([\d]+)|([\w\.\-\_\/]+:[\w\.\_\-\/]+)):?#",$arrItems[2],$arrResults);
+	            preg_match_all("#(\'([^\']*)\'|\"([^\"]*)\"|([\d]+)|([\w\.\-\_\/\[]+:[\w\.\_\-\/\]]+)):?#",$arrItems[2],$arrResults);
 
 	            if($arrResults[5][($blOut)?0:1] != ''){
 	                $arrTagParts = explode(':',$arrResults[5][($blOut)?0:1]);
