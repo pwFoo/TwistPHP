@@ -40,6 +40,7 @@
 			self::debug("== Starting TwistCron Manager ==");
 
 			$arrRunningTasks = array();
+			self::checkZombies();
 			$arrActiveTasks = self::activeTasks();
 
 			if(count($arrActiveTasks)){
@@ -150,6 +151,22 @@
 			return \Twist::Database()->records(TWIST_DATABASE_TABLE_PREFIX.'scheduled_tasks')->all();
 		}
 
+		public static function checkZombies(){
+
+			foreach(\Twist::Database()->records(TWIST_DATABASE_TABLE_PREFIX.'scheduled_tasks')->find('zombie','status') as $arrEachTask){
+
+				//Check to see if a Zombie task is still alive
+				if(posix_getsid($arrEachTask['pid']) === false){
+
+					//Mark the Zombie task as finished, dont log a runtime (for now)
+					$resTask = \Twist::Database()->records(TWIST_DATABASE_TABLE_PREFIX.'scheduled_tasks')->get($arrEachTask['id'],'id');
+					$resTask->set('status','finished');
+					$resTask->set('pid',0);
+					$resTask->commit();
+				}
+			}
+		}
+
 		public static function activeTasks(){
 
 			$arrRun = array();
@@ -213,7 +230,7 @@
 			$arrOut = \Twist::Database()->records(TWIST_DATABASE_TABLE_PREFIX.'scheduled_tasks')->find($arrRun,'frequency');
 
 			foreach($arrOut as $intKey => $arrEachTask){
-				if($arrEachTask['enabled'] == '0'){
+				if($arrEachTask['enabled'] == '0' || $arrEachTask['status'] == 'zombie'){
 					unset($arrOut[$intKey]);
 				}
 			}
@@ -225,17 +242,20 @@
 
 			$resTask = \Twist::Database()->records(TWIST_DATABASE_TABLE_PREFIX.'scheduled_tasks')->get($intTaskID,'id');
 
-			//Store the last run of the current task in the database
-			$resTask->set('last_run',date('Y-m-d H:i:s'));
-			$resTask->set('status','running');
-			$resTask->commit();
-
 			//@TODO - Non-Twist tasks have to be built in here
 
 			self::debug("- Start: ".$resTask->get('description'));
 			$strCommand = sprintf('twist_cron_child=%d php '.rtrim(TWIST_PUBLIC_ROOT,'/').'/index.php',$intTaskID);
 
-			return \Twist::Command()->executeChild($strCommand);
+			$intPID = \Twist::Command()->executeChild($strCommand);
+
+			//Store the last run of the current task in the database
+			$resTask->set('last_run',date('Y-m-d H:i:s'));
+			$resTask->set('status','running');
+			$resTask->set('pid',$intPID);
+			$resTask->commit();
+
+			return $intPID;
 		}
 
 		public static function logTask($intTaskID,$intPID){
@@ -248,6 +268,7 @@
 			//Store the last run of the current task in the database
 			$resTask->set('runtime',(time() - strtotime($resTask->get('last_run'))));
 			$resTask->set('status','finished');
+			$resTask->set('pid',0);
 			$resTask->commit();
 
 			self::debug("- End: ".$resTask->get('description')." [Runtime: ".$resTask->get('runtime')." sec]");
